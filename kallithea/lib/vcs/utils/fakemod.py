@@ -1,4 +1,4 @@
-import imp
+import importlib
 
 
 def create_module(name, path):
@@ -7,7 +7,8 @@ def create_module(name, path):
     as given ``name`` and would contain code read from file at the given
     ``path`` (it may also be a zip or package containing *__main__* module).
     """
-    module = imp.new_module(name)
-    module.__file__ = path
-    exec(compile(open(path, "rb").read(), path, 'exec'), module.__dict__)
+
+    spec = importlib.util.spec_from_file_location('module_name', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
     return module
