@@ -299,6 +299,12 @@ msgstr ""
 "Σφάλμα: κάποια σετ αλλαγών δεν βρέθηκαν όταν εμφανιζόταν αυτό το αίτημα "
 "έλξης από το %s."
 
+msgid "%d additional changesets are not shown."
+msgstr "%d επιπλέον σύνολα αλλαγών δεν εμφανίζονται."
+
+msgid "%d changesets available for merging are not shown."
+msgstr "%d σύνολα αλλαγών δεν εμφανίζονται για συγχώνευση."
+
 msgid "The diff can't be shown - the PR revisions could not be found."
 msgstr ""
 "Οι διαφορές δεν μπορούν να εμφανιστούν - οι αναθεωρήσεις δεν βρέθηκαν."
@@ -2101,6 +2107,22 @@ msgstr ""
 msgid "Permanent URL"
 msgstr "Μόνιμη διεύθυνση URL"
 
+msgid ""
+"In case this repository is renamed or moved into another group the "
+"repository URL changes.\n"
+"                           Using the above permanent URL guarantees that "
+"this repository always will be accessible on that URL.\n"
+"                           This is useful for CI systems, or any other "
+"cases that you need to hardcode the URL into a 3rd party service."
+msgstr ""
+"Σε περίπτωση που αυτό το αποθετήριο μετονομαστεί ή μετακινηθεί σε άλλη "
+"ομάδα, η διεύθυνση URL του αποθετηρίου αλλάζει.\n"
+"Χρησιμοποιώντας την παραπάνω μόνιμη διεύθυνση URL εξασφαλίζετε ότι αυτό "
+"το αποθετήριο θα είναι πάντα προσβάσιμο σε εκείνη τη διεύθυνση.\n"
+"Αυτό είναι χρήσιμο για συστήματα CI ή οποιεσδήποτε άλλες περιπτώσεις που "
+"χρειάζεστε να ενσωματώσετε σκληρή κωδικοποίηση της διεύθυνσης URL σε "
+"υπηρεσία τρίτου."
+
 msgid "Remote repository"
 msgstr "Απομακρυσμένο αποθετήριο"
 
@@ -2202,6 +2224,29 @@ msgstr ""
 msgid "Save Settings"
 msgstr "Αποθήκευση Ρυθμίσεων"
 
+msgid "Custom Global Mercurial Hooks"
+msgstr "Προσαρμοσμένα Παγκόσμια Αγκίστρια Mercurial"
+
+msgid ""
+"Hooks can be used to trigger actions on certain events such as push / "
+"pull. They can trigger Python functions or external applications."
+msgstr ""
+"Τα αγκίστρια μπορούν να χρησιμοποιηθούν για να ενεργοποιήσουν ενέργειες "
+"σε συγκεκριμένα γεγονότα, όπως το push / pull. Μπορούν να ενεργοποιήσουν "
+"συναρτήσεις Python ή εξωτερικές εφαρμογές."
+
+msgid "Git Hooks"
+msgstr "Άγκιστρα Git"
+
+msgid ""
+"Kallithea has no support for custom Git hooks. Kallithea will use Git "
+"post-receive hooks internally. Installation of these hooks is managed in "
+"%s."
+msgstr ""
+"Η Καλλιθέα δεν υποστηρίζει προσαρμοσμένα αγκίστρια Git. Η Καλλιθέα θα "
+"χρησιμοποιήσει αγκίστρια μετά την αποστολή (post-receive hooks) του Git "
+"εσωτερικά. Η εγκατάσταση αυτών των αγκιστριών διαχειρίζεται στο %s."
+
 msgid "Custom Hooks are not enabled"
 msgstr "Τα προσαρμοσμένα άγκιστρα δεν είναι ενεργά"
 
@@ -2232,6 +2277,15 @@ msgstr ""
 
 msgid "Install Git hooks"
 msgstr "Εγκατάσταση Git hooks"
+
+msgid ""
+"Install Kallithea's internal hooks for all Git repositories where they "
+"are missing or can be upgraded. Existing hooks that don't seem to come "
+"from Kallithea will not be touched."
+msgstr ""
+"Εγκατάσταση των εσωτερικών αγκιστριών της Καλλιθέας για όλα τα αποθετήρια "
+"Git όπου αυτά λείπουν ή μπορούν να αναβαθμιστούν. Τα υπάρχοντα αγκίστρια "
+"που δεν φαίνεται να προέρχονται από την Καλλιθέα δεν θα αλλάξουνε."
 
 msgid "Install and overwrite Git hooks"
 msgstr "Εγκατάσταση και επανεγγραφή Git hooks"
@@ -2287,6 +2341,9 @@ msgstr "Διαδρομή Git"
 
 msgid "Python Packages"
 msgstr "Πακέτα Python"
+
+msgid "Mercurial Push Hooks"
+msgstr "Αγκίστρια Αποστολής (Push Hooks) του Mercurial"
 
 msgid "Show repository size after push"
 msgstr "Εμφάνιση μεγέθους αποθετηρίου μετά την ώθηση"
@@ -3709,6 +3766,9 @@ msgstr "Ώθηση νέου αποθετηρίου"
 
 msgid "Existing repository?"
 msgstr "Υπάρχον αποθετήριο;"
+
+msgid "Readme file from %s"
+msgstr "Αρχείο README από το %s"
 
 msgid "Download %s as %s"
 msgstr "Λήψη %s ως %s"
