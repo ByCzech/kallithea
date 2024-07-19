@@ -128,6 +128,7 @@ psycopg2
 docs
 setup
 conftest
+packaging
 '''.split())
 
 normal_modules = set('''

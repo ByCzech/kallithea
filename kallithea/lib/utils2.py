@@ -38,10 +38,10 @@ import string
 import sys
 import time
 import urllib.parse
-from distutils.version import StrictVersion
 
 import bcrypt
 import urlobject
+from packaging.version import Version
 from sqlalchemy.engine import url as sa_url
 from sqlalchemy.exc import ArgumentError
 from tg import tmpl_context
@@ -494,7 +494,7 @@ def check_password(password, hashed):
     return False
 
 
-git_req_ver = StrictVersion('1.7.4')
+git_req_ver = Version('1.7.4')
 
 def check_git_version():
     """
@@ -525,7 +525,7 @@ def check_git_version():
     output = safe_str(stdout).strip()
     m = re.search(r"\d+.\d+.\d+", output)
     if m:
-        ver = StrictVersion(m.group(0))
+        ver = Version(m.group(0))
         log.debug('Git executable: "%s", version %s (parsed from: "%s")',
                   settings.GIT_EXECUTABLE_PATH, ver, output)
         if ver < git_req_ver:
@@ -538,7 +538,7 @@ def check_git_version():
             log.error("Terminating ...")
             sys.exit(1)
     else:
-        ver = StrictVersion('0.0.0')
+        ver = Version('0.0.0')
         log.warning('Error finding version number in "%s --version" stdout:\n%s',
                     settings.GIT_EXECUTABLE_PATH, output)
 
