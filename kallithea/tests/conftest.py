@@ -204,7 +204,7 @@ class MyWSGIServer(WSGIServer):
         return '%s://%s%s:%s/%s' % (proto, auth, host, port, repo_name)
 
 
-@pytest.yield_fixture(scope="session")
+@pytest.fixture(scope="session")
 def webserver():
     """Start web server while tests are running.
     Useful for debugging and necessary for vcs operation tests."""
