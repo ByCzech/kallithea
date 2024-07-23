@@ -70,6 +70,7 @@ cmd_mapping = {
     'changegroupsubset': 'pull',
     'changesetdata': 'pull',
     'clonebundles': 'pull',
+    'clonebundles_manifest': 'pull',
     'debugwireargs': 'pull',
     'filedata': 'pull',
     'getbundle': 'pull',
