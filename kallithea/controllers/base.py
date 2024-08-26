@@ -456,8 +456,16 @@ class BaseController(TGController):
         if request.method not in ['GET', 'HEAD', 'POST']:
             raise webob.exc.HTTPMethodNotAllowed()
 
+        try:
+            params = request.params
+        except UnicodeDecodeError as e:
+            # webobj will leak UnicodeDecodeError when decoding invalid
+            # URLencoded byte sequences in parameters
+            log.error('Error decoding request parameters: %s' % e)
+            raise webob.exc.HTTPBadRequest()
+
         # Also verify the _method override - no longer allowed.
-        if request.params.get('_method') is None:
+        if params.get('_method') is None:
             pass # no override, no problem
         else:
             raise webob.exc.HTTPMethodNotAllowed()
