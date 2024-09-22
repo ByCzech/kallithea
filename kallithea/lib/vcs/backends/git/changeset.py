@@ -316,7 +316,7 @@ class GitChangeset(BaseChangeset):
         so = self.repository.run_git_command(cmd)
 
         for i, blame_line in enumerate(so.split('\n')[:-1]):
-            sha, line = re.split(r' ', blame_line, 1)
+            sha, line = re.split(r' ', blame_line, maxsplit=1)
             yield (i + 1, sha, lambda sha=sha: self.repository.get_changeset(sha), line)
 
     def fill_archive(self, stream=None, kind='tgz', prefix=None,
