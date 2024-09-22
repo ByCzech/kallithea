@@ -20,6 +20,7 @@ from kallithea.config.middleware.simplegit import SimpleGit
 from kallithea.config.middleware.simplehg import SimpleHg
 from kallithea.config.middleware.wrapper import RequestWrapper
 from kallithea.lib.utils2 import asbool
+from kallithea.lib.vcs.utils import hgcompat
 
 
 __all__ = ['make_app']
@@ -50,6 +51,7 @@ def wrap_app(app):
 def make_app(global_conf, **app_conf):
     """Return WSGI app with logging Mercurial stdout/stderr - to be used as
     Paste or mod_wsgi entry point"""
+    hgcompat.redirect_stdio_to_logging()
     return make_app_raw(global_conf, **app_conf)
 
 
