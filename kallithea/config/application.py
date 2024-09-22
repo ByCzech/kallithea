@@ -48,6 +48,12 @@ def wrap_app(app):
 
 
 def make_app(global_conf, **app_conf):
+    """Return WSGI app with logging Mercurial stdout/stderr - to be used as
+    Paste or mod_wsgi entry point"""
+    return make_app_raw(global_conf, **app_conf)
+
+
+def make_app_raw(global_conf, **app_conf):
     """
     Set up Kallithea with the settings found in the PasteDeploy configuration
     file used.

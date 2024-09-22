@@ -116,7 +116,7 @@ def _git_hook_environment(repo_path):
     path_to_ini_file = extras['config']
     config = paste.deploy.appconfig('config:' + path_to_ini_file)
     #logging.config.fileConfig(ini_file_path) # Note: we are in a different process - don't use configured logging
-    kallithea.config.application.make_app(config.global_conf, **config.local_conf)
+    kallithea.config.application.make_app_raw(config.global_conf, **config.local_conf)
 
     # fix if it's not a bare repo
     if repo_path.endswith(os.sep + '.git'):
