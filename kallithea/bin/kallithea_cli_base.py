@@ -79,7 +79,7 @@ def register_command(needs_config_file=False, config_file_initialize_app=False, 
                 if needs_config_file:
                     annotated(*args, config=config, **kwargs)
                 if config_file_initialize_app:
-                    kallithea.config.application.make_app(config.global_conf, **config.local_conf)
+                    kallithea.config.application.make_app_raw(config.global_conf, **config.local_conf)
                     annotated(*args, **kwargs)
             return cli_command(runtime_wrapper)
         return annotator

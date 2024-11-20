@@ -40,7 +40,7 @@ def celery_run(celery_args, config):
 
     kallithea.CELERY_APP.config_from_object(celery_app.make_celery_config(config))
 
-    kallithea.CELERY_APP.loader.on_worker_process_init = lambda: kallithea.config.application.make_app(config.global_conf, **config.local_conf)
+    kallithea.CELERY_APP.loader.on_worker_process_init = lambda: kallithea.config.application.make_app_raw(config.global_conf, **config.local_conf)
 
     args = list(celery_args)
     # args[0] is generally ignored when prog_name is specified, but -h *needs* it to be 'worker' ... but will also suggest that users specify 'worker' explicitly

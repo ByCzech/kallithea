@@ -631,10 +631,7 @@ that, you'll need to:
 
     WSGIRestrictEmbedded On
 
-- Create a WSGI dispatch script, like the one below. The ``WSGIDaemonProcess``
-  ``python-home`` directive will make sure it uses the right Python Virtual
-  Environment and that paste thus can pick up the right Kallithea
-  application.
+- Create a WSGI dispatch script, like `/srv/kallithea/wsgi.py`:
 
   .. code-block:: python
 
@@ -643,6 +640,10 @@ that, you'll need to:
       fileConfig(ini, {'__file__': ini, 'here': '/srv/kallithea'})
       from paste.deploy import loadapp
       application = loadapp('config:' + ini)
+
+  We will use the ``WSGIDaemonProcess`` directive ``python-home`` to make sure
+  it uses the right Python Virtual Environment where paste loadapp will pick up
+  the right Kallithea application.
 
 - Add the necessary ``WSGI*`` directives to the Apache Virtual Host configuration
   file, like in the example below. Notice that the WSGI dispatch script created
@@ -665,8 +666,13 @@ that, you'll need to:
       WSGIDaemonProcess kallithea processes=5 threads=1 maximum-requests=100 \
           python-home=/srv/kallithea/venv lang=C.UTF-8
       WSGIProcessGroup kallithea
-      WSGIScriptAlias / /srv/kallithea/dispatch.wsgi
+      WSGIScriptAlias / /srv/kallithea/wsgi.py
       WSGIPassAuthorization On
+      <Directory /srv/kallithea>
+          <Files wsgi.py>
+              Require all granted
+          </Files>
+      </Directory>
 
 
 Other configuration files
