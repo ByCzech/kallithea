@@ -89,6 +89,10 @@ cmd_mapping = {
     'pushkey': 'push',
     'putlfile': 'push',
     'unbundle': 'push',
+    # the following commands are used by hg-evolve
+    'evoext_obshashrange_v1': 'pull',
+    '_exttopics_heads': 'pull',
+    'tns_heads': 'pull',
     }
 
 
