@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Kallithea'
-copyright = '2010-2024 by various authors, licensed as GPLv3.'
+copyright = '2010-2025 by various authors, licensed as GPLv3.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

@@ -1,9 +1,9 @@
-pytest >= 4.6.6, < 8.3
+pytest >= 4.6.6, < 8.4
 pytest-sugar >= 0.9.2, < 1.1
-pytest-benchmark >= 3.2.2, < 4.1
-pytest-localserver >= 0.5.0, < 0.9
+pytest-benchmark >= 3.2.2, < 5.2
+pytest-localserver >= 0.5.0, < 0.10
 mock >= 3.0.0, < 5.2
-Sphinx >= 1.8.0, < 5.2
+Sphinx >= 1.8.0, < 9
 WebTest >= 2.0.6, < 3.1
-isort == 5.13.2
+isort >= 6, < 6.1
 pyflakes == 3.2.0

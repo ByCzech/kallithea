@@ -268,6 +268,8 @@ class FileNode(Node):
             content = self.changeset.get_file_content(self.path)
         else:
             content = self._content
+        if content is not None:
+            content = safe_bytes(content)
         return content
 
     @LazyProperty
