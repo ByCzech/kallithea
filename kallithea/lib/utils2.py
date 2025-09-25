@@ -313,8 +313,6 @@ def obfuscate_url_pw(engine):
         _url = sa_url.make_url(engine or '')
     except ArgumentError:
         return engine
-    if _url.password:
-        _url.password = 'XXXXX'
     return str(_url)
 
 
