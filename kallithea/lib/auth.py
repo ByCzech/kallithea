@@ -29,7 +29,7 @@ import logging
 
 import ipaddr
 from decorator import decorator
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, aliased
 from sqlalchemy.orm.exc import ObjectDeletedError
 from tg import request
 from tg.i18n import ugettext as _
@@ -164,11 +164,11 @@ class AuthUser(object):
         # user group global permissions
         user_perms_from_users_groups = meta.Session().query(db.UserGroupToPerm) \
             .options(joinedload(db.UserGroupToPerm.permission)) \
-            .join((db.UserGroupMember, db.UserGroupToPerm.users_group_id ==
-                   db.UserGroupMember.users_group_id)) \
+            .join(db.UserGroupMember, db.UserGroupToPerm.users_group_id ==
+                   db.UserGroupMember.users_group_id) \
             .filter(db.UserGroupMember.user_id == self.user_id) \
-            .join((db.UserGroup, db.UserGroupMember.users_group_id ==
-                   db.UserGroup.users_group_id)) \
+            .join(db.UserGroup, db.UserGroupMember.users_group_id ==
+                   db.UserGroup.users_group_id) \
             .filter(db.UserGroup.users_group_active == True) \
             .order_by(db.UserGroupToPerm.users_group_id) \
             .all()
@@ -222,11 +222,11 @@ class AuthUser(object):
             # user group repository permissions
             user_repo_perms_from_users_groups = \
              meta.Session().query(db.UserGroupRepoToPerm) \
-                .join((db.UserGroup, db.UserGroupRepoToPerm.users_group_id ==
-                       db.UserGroup.users_group_id)) \
+                .join(db.UserGroup, db.UserGroupRepoToPerm.users_group_id ==
+                       db.UserGroup.users_group_id) \
                 .filter(db.UserGroup.users_group_active == True) \
-                .join((db.UserGroupMember, db.UserGroupRepoToPerm.users_group_id ==
-                       db.UserGroupMember.users_group_id)) \
+                .join(db.UserGroupMember, db.UserGroupRepoToPerm.users_group_id ==
+                       db.UserGroupMember.users_group_id) \
                 .filter(db.UserGroupMember.user_id == self.user_id) \
                 .options(joinedload(db.UserGroupRepoToPerm.repository)) \
                 .options(joinedload(db.UserGroupRepoToPerm.permission)) \
@@ -271,11 +271,11 @@ class AuthUser(object):
             # user group for repo groups permissions
             user_repo_group_perms_from_users_groups = \
                 meta.Session().query(db.UserGroupRepoGroupToPerm) \
-                .join((db.UserGroup, db.UserGroupRepoGroupToPerm.users_group_id ==
-                       db.UserGroup.users_group_id)) \
+                .join(db.UserGroup, db.UserGroupRepoGroupToPerm.users_group_id ==
+                       db.UserGroup.users_group_id) \
                 .filter(db.UserGroup.users_group_active == True) \
-                .join((db.UserGroupMember, db.UserGroupRepoGroupToPerm.users_group_id
-                       == db.UserGroupMember.users_group_id)) \
+                .join(db.UserGroupMember, db.UserGroupRepoGroupToPerm.users_group_id
+                       == db.UserGroupMember.users_group_id) \
                 .filter(db.UserGroupMember.user_id == self.user_id) \
                 .options(joinedload(db.UserGroupRepoGroupToPerm.permission)) \
                 .all()
@@ -314,16 +314,17 @@ class AuthUser(object):
                 user_group_permissions[u_k] = p
 
             # user group for user group permissions
+            ug = aliased(db.UserGroup)
             user_group_user_groups_perms = \
                 meta.Session().query(db.UserGroupUserGroupToPerm) \
-                .join((db.UserGroup, db.UserGroupUserGroupToPerm.target_user_group_id
-                       == db.UserGroup.users_group_id)) \
-                .join((db.UserGroupMember, db.UserGroupUserGroupToPerm.user_group_id
-                       == db.UserGroupMember.users_group_id)) \
+                .join(db.UserGroup, db.UserGroupUserGroupToPerm.target_user_group_id
+                       == db.UserGroup.users_group_id) \
+                .join(db.UserGroupMember, db.UserGroupUserGroupToPerm.user_group_id
+                       == db.UserGroupMember.users_group_id) \
                 .filter(db.UserGroupMember.user_id == self.user_id) \
-                .join((db.UserGroup, db.UserGroupMember.users_group_id ==
-                       db.UserGroup.users_group_id), aliased=True, from_joinpoint=True) \
-                .filter(db.UserGroup.users_group_active == True) \
+                .join(ug, db.UserGroupMember.users_group_id ==
+                       ug.users_group_id) \
+                .filter(ug.users_group_active == True) \
                 .options(joinedload(db.UserGroupUserGroupToPerm.permission)) \
                 .all()
             for perm in user_group_user_groups_perms:

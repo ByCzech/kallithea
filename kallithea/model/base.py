@@ -45,4 +45,4 @@ def init_model(engine):
     """
     engine_str = obfuscate_url_pw(str(engine.url))
     log.info("initializing db for %s", engine_str)
-    meta.Base.metadata.bind = engine
+    meta.Session.configure(bind=engine)
