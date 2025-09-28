@@ -142,7 +142,7 @@ class MarkupRenderer(object):
                   'strong', 'sub', 'sup', 'table', 'tbody', 'td', 'th',
                   'thead', 'tr', 'ul'],
             attributes=['class', 'id', 'style', 'label', 'title', 'alt', 'href', 'src'],
-            styles=['color'],
+            css_sanitizer=['color'],
             protocols=['http', 'https', 'mailto'],
             )
 
