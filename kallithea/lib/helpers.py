@@ -162,7 +162,7 @@ class CodeHtmlFormatter(HtmlFormatter):
     My code Html Formatter for source codes
     """
 
-    def wrap(self, source, outfile):
+    def wrap(self, source):
         return self._wrap_div(self._wrap_pre(self._wrap_code(source)))
 
     def _wrap_code(self, source):
