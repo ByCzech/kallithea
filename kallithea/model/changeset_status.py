@@ -110,7 +110,7 @@ class ChangesetStatusModel(object):
                      with_revisions=False):
         q = self._get_status_query(repo, revision, pull_request,
                                    with_revisions)
-        q = q.options(joinedload('author'))
+        q = q.options(joinedload(db.ChangesetStatus.author))
         return q.all()
 
     def get_status(self, repo, revision=None, pull_request=None, as_str=True):
