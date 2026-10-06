@@ -33,6 +33,7 @@ import traceback
 
 import bleach
 import markdown as markdown_mod
+from bleach.css_sanitizer import CSSSanitizer
 from docutils.core import publish_parts
 from docutils.parsers.rst import directives
 
@@ -142,7 +143,7 @@ class MarkupRenderer(object):
                   'strong', 'sub', 'sup', 'table', 'tbody', 'td', 'th',
                   'thead', 'tr', 'ul'],
             attributes=['class', 'id', 'style', 'label', 'title', 'alt', 'href', 'src'],
-            css_sanitizer=['color'],
+            css_sanitizer=CSSSanitizer(allowed_css_properties=['color']),
             protocols=['http', 'https', 'mailto'],
             )
 
