@@ -99,7 +99,9 @@ class SummaryController(base.BaseRepoController):
 
             return readme_data, readme_file
 
-        kind = 'README'
+        # Include a rendering cache version so changes to generated README
+        # HTML do not keep serving stale cached output for unchanged revisions.
+        kind = 'README-v2'
         return _get_readme_from_cache(repo_name, kind, c.db_repo.changeset_cache.get('raw_id'))
 
     @LoginRequired(allow_default_user=True)
