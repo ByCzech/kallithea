@@ -47,6 +47,26 @@ from kallithea.model.user import UserModel
 log = logging.getLogger(__name__)
 
 
+def _url_with_database(url, database):
+    """Return a database URL targeting *database* across SQLAlchemy versions."""
+    if hasattr(url, 'set'):
+        if database is None:
+            # URL.set() treats None as "leave unchanged".
+            return url._replace(database=None)
+        return url.set(database=database)
+
+    # SQLAlchemy 1.3 URL objects are mutable.
+    url.database = database
+    return url
+
+
+def _execute_driver_sql(connection, statement):
+    """Execute raw driver SQL across SQLAlchemy versions."""
+    if hasattr(connection, 'exec_driver_sql'):
+        return connection.exec_driver_sql(statement)
+    return connection.execute(statement)
+
+
 class DbManage(object):
     def __init__(self, dbconf, root, SESSION=None, cli_args=None):
         self.dbname = dbconf.split('/')[-1]
@@ -93,19 +113,22 @@ class DbManage(object):
             meta.Base.metadata.drop_all()
         else:
             if url.drivername == 'mysql':
-                url.database = None  # don't connect to the database (it might not exist)
-                engine = sqlalchemy.create_engine(url)
+                # Don't connect to the database itself - it might not exist.
+                server_url = _url_with_database(url, None)
+                engine = sqlalchemy.create_engine(server_url)
                 with engine.connect() as conn:
-                    conn.execute('DROP DATABASE IF EXISTS `%s`' % database)
-                    conn.execute('CREATE DATABASE `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci' % database)
+                    _execute_driver_sql(conn, 'DROP DATABASE IF EXISTS `%s`' % database)
+                    _execute_driver_sql(
+                        conn, 'CREATE DATABASE `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci' % database)
             elif url.drivername == 'postgresql':
                 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-                url.database = 'postgres'  # connect to the system database (as the real one might not exist)
-                engine = sqlalchemy.create_engine(url)
+                # Connect to the system database - the real one might not exist.
+                server_url = _url_with_database(url, 'postgres')
+                engine = sqlalchemy.create_engine(server_url)
                 with engine.connect() as conn:
                     conn.connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-                    conn.execute('DROP DATABASE IF EXISTS "%s"' % database)
-                    conn.execute('CREATE DATABASE "%s"' % database)
+                    _execute_driver_sql(conn, 'DROP DATABASE IF EXISTS "%s"' % database)
+                    _execute_driver_sql(conn, 'CREATE DATABASE "%s"' % database)
             else:
                 # Some databases enforce foreign key constraints and Base.metadata.drop_all() doesn't work, but this is
                 # known to work on SQLite - possibly not on other databases with strong referential integrity
