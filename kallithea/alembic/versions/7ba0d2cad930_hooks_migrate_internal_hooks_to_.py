@@ -26,31 +26,26 @@ down_revision = 'f62826179f39'
 branch_labels = None
 depends_on = None
 
+import sqlalchemy as sa
 from alembic import op
-from sqlalchemy import MetaData, Table
-
-from kallithea.model import db
-
-
-meta = MetaData()
 
 
 def upgrade():
-    meta.bind = op.get_bind()
-    ui = Table(db.Ui.__tablename__, meta, autoload=True)
+    bind = op.get_bind()
+    ui = sa.table('ui', sa.column('ui_key'), sa.column('ui_value'))
 
-    ui.update(values={
-        'ui_key': 'changegroup.kallithea_update',
-        'ui_value': 'python:',  # value in db isn't used
-    }).where(ui.c.ui_key == 'changegroup.update').execute()
-    ui.update(values={
-        'ui_key': 'changegroup.kallithea_repo_size',
-        'ui_value': 'python:',  # value in db isn't used
-    }).where(ui.c.ui_key == 'changegroup.repo_size').execute()
+    bind.execute(ui.update().where(ui.c.ui_key == 'changegroup.update').values(
+        ui_key='changegroup.kallithea_update',
+        ui_value='python:',  # value in db isn't used
+    ))
+    bind.execute(ui.update().where(ui.c.ui_key == 'changegroup.repo_size').values(
+        ui_key='changegroup.kallithea_repo_size',
+        ui_value='python:',  # value in db isn't used
+    ))
 
     # 642847355a10 moved these hooks out of db - remove old entries
-    ui.delete().where(ui.c.ui_key == 'changegroup.push_logger').execute()
-    ui.delete().where(ui.c.ui_key == 'outgoing.pull_logger').execute()
+    bind.execute(ui.delete().where(ui.c.ui_key == 'changegroup.push_logger'))
+    bind.execute(ui.delete().where(ui.c.ui_key == 'outgoing.pull_logger'))
 
 
 def downgrade():

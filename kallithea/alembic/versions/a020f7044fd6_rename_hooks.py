@@ -26,38 +26,33 @@ down_revision = '9358dc3d6828'
 branch_labels = None
 depends_on = None
 
+import sqlalchemy as sa
 from alembic import op
-from sqlalchemy import MetaData, Table
-
-from kallithea.model import db
-
-
-meta = MetaData()
 
 
 def upgrade():
-    meta.bind = op.get_bind()
-    ui = Table(db.Ui.__tablename__, meta, autoload=True)
+    bind = op.get_bind()
+    ui = sa.table('ui', sa.column('ui_key'), sa.column('ui_value'))
 
-    ui.update(values={
-        'ui_key': 'prechangegroup.push_lock_handling',
-        'ui_value': 'python:kallithea.lib.hooks.push_lock_handling',
-    }).where(ui.c.ui_key == 'prechangegroup.pre_push').execute()
-    ui.update(values={
-        'ui_key': 'preoutgoing.pull_lock_handling',
-        'ui_value': 'python:kallithea.lib.hooks.pull_lock_handling',
-    }).where(ui.c.ui_key == 'preoutgoing.pre_pull').execute()
+    bind.execute(ui.update().where(ui.c.ui_key == 'prechangegroup.pre_push').values(
+        ui_key='prechangegroup.push_lock_handling',
+        ui_value='python:kallithea.lib.hooks.push_lock_handling',
+    ))
+    bind.execute(ui.update().where(ui.c.ui_key == 'preoutgoing.pre_pull').values(
+        ui_key='preoutgoing.pull_lock_handling',
+        ui_value='python:kallithea.lib.hooks.pull_lock_handling',
+    ))
 
 
 def downgrade():
-    meta.bind = op.get_bind()
-    ui = Table(db.Ui.__tablename__, meta, autoload=True)
+    bind = op.get_bind()
+    ui = sa.table('ui', sa.column('ui_key'), sa.column('ui_value'))
 
-    ui.update(values={
-        'ui_key': 'prechangegroup.pre_push',
-        'ui_value': 'python:kallithea.lib.hooks.pre_push',
-    }).where(ui.c.ui_key == 'prechangegroup.push_lock_handling').execute()
-    ui.update(values={
-        'ui_key': 'preoutgoing.pre_pull',
-        'ui_value': 'python:kallithea.lib.hooks.pre_pull',
-    }).where(ui.c.ui_key == 'preoutgoing.pull_lock_handling').execute()
+    bind.execute(ui.update().where(ui.c.ui_key == 'prechangegroup.push_lock_handling').values(
+        ui_key='prechangegroup.pre_push',
+        ui_value='python:kallithea.lib.hooks.pre_push',
+    ))
+    bind.execute(ui.update().where(ui.c.ui_key == 'preoutgoing.pull_lock_handling').values(
+        ui_key='preoutgoing.pre_pull',
+        ui_value='python:kallithea.lib.hooks.pre_pull',
+    ))
