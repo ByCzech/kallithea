@@ -114,7 +114,10 @@ class BaseDbModel(object):
     @classmethod
     def get(cls, id_):
         if id_:
-            return cls.query().get(id_)
+            session = meta.Session()
+            if hasattr(session, 'get'):
+                return session.get(cls, id_)
+            return session.query(cls).get(id_)
 
     @classmethod
     def guess_instance(cls, value, callback=None):
@@ -151,14 +154,14 @@ class BaseDbModel(object):
         except (TypeError, ValueError):
             raise HTTPNotFound
 
-        res = cls.query().get(id_)
+        res = cls.get(id_)
         if res is None:
             raise HTTPNotFound
         return res
 
     @classmethod
     def delete(cls, id_):
-        obj = cls.query().get(id_)
+        obj = cls.get(id_)
         meta.Session().delete(obj)
 
     def __repr__(self):

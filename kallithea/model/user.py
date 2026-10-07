@@ -446,7 +446,7 @@ class UserModel(object):
         :param email_id:
         """
         user = db.User.guess_instance(user)
-        obj = db.UserEmailMap.query().get(email_id)
+        obj = db.UserEmailMap.get(email_id)
         if obj is not None:
             meta.Session().delete(obj)
 
@@ -475,6 +475,6 @@ class UserModel(object):
         :param ip_id:
         """
         user = db.User.guess_instance(user)
-        obj = db.UserIpMap.query().get(ip_id)
+        obj = db.UserIpMap.get(ip_id)
         if obj:
             meta.Session().delete(obj)
