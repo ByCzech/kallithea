@@ -406,27 +406,27 @@ class User(meta.Base, BaseDbModel):
     created_on = Column(DateTime(timezone=False), nullable=False, default=datetime.datetime.now)
     _user_data = Column("user_data", LargeBinary(), nullable=True)  # JSON data # FIXME: not nullable?
 
-    user_log = relationship('UserLog')
+    user_log = relationship('UserLog', back_populates='user')
     user_perms = relationship('UserToPerm', primaryjoin="User.user_id==UserToPerm.user_id", cascade='all')
 
-    repositories = relationship('Repository')
-    repo_groups = relationship('RepoGroup')
-    user_groups = relationship('UserGroup')
+    repositories = relationship('Repository', back_populates='owner')
+    repo_groups = relationship('RepoGroup', back_populates='owner')
+    user_groups = relationship('UserGroup', back_populates='owner')
     user_followers = relationship('UserFollowing', primaryjoin='UserFollowing.follows_user_id==User.user_id', cascade='all')
     followings = relationship('UserFollowing', primaryjoin='UserFollowing.user_id==User.user_id', cascade='all')
 
     repo_to_perm = relationship('UserRepoToPerm', primaryjoin='UserRepoToPerm.user_id==User.user_id', cascade='all')
     repo_group_to_perm = relationship('UserRepoGroupToPerm', primaryjoin='UserRepoGroupToPerm.user_id==User.user_id', cascade='all')
 
-    group_member = relationship('UserGroupMember', cascade='all')
+    group_member = relationship('UserGroupMember', cascade='all', back_populates='user')
 
     # comments created by this user
-    user_comments = relationship('ChangesetComment', cascade='all')
+    user_comments = relationship('ChangesetComment', cascade='all', back_populates='author')
     # extra emails for this user
-    user_emails = relationship('UserEmailMap', cascade='all')
+    user_emails = relationship('UserEmailMap', cascade='all', back_populates='user')
     # extra API keys
-    user_api_keys = relationship('UserApiKeys', cascade='all')
-    ssh_keys = relationship('UserSshKeys', cascade='all')
+    user_api_keys = relationship('UserApiKeys', cascade='all', back_populates='user')
+    ssh_keys = relationship('UserSshKeys', cascade='all', back_populates='user')
 
     @hybrid_property
     def email(self):
@@ -669,7 +669,7 @@ class UserApiKeys(meta.Base, BaseDbModel):
     expires = Column(Float(53), nullable=False)
     created_on = Column(DateTime(timezone=False), nullable=False, default=datetime.datetime.now)
 
-    user = relationship('User')
+    user = relationship('User', back_populates='user_api_keys')
 
     @hybrid_property
     def is_expired(self):
@@ -686,7 +686,7 @@ class UserEmailMap(meta.Base, BaseDbModel):
     email_id = Column(Integer(), primary_key=True)
     user_id = Column(Integer(), ForeignKey('users.user_id'), nullable=False)
     _email = Column("email", String(255), nullable=False, unique=True)
-    user = relationship('User')
+    user = relationship('User', back_populates='user_emails')
 
     @validates('_email')
     def validate_email(self, key, email):
@@ -757,8 +757,8 @@ class UserLog(meta.Base, BaseDbModel):
     def action_as_day(self):
         return datetime.date(*self.action_date.timetuple()[:3])
 
-    user = relationship('User')
-    repository = relationship('Repository', cascade='')
+    user = relationship('User', back_populates='user_log')
+    repository = relationship('Repository', cascade='', back_populates='logs')
 
 
 class UserGroup(meta.Base, BaseDbModel):
@@ -775,14 +775,14 @@ class UserGroup(meta.Base, BaseDbModel):
     created_on = Column(DateTime(timezone=False), nullable=False, default=datetime.datetime.now)
     _group_data = Column("group_data", LargeBinary(), nullable=True)  # JSON data # FIXME: not nullable?
 
-    members = relationship('UserGroupMember', cascade="all, delete-orphan")
+    members = relationship('UserGroupMember', cascade="all, delete-orphan", back_populates='users_group')
     users_group_to_perm = relationship('UserGroupToPerm', cascade='all')
     users_group_repo_to_perm = relationship('UserGroupRepoToPerm', cascade='all')
     users_group_repo_group_to_perm = relationship('UserGroupRepoGroupToPerm', cascade='all')
     user_user_group_to_perm = relationship('UserUserGroupToPerm', cascade='all')
     user_group_user_group_to_perm = relationship('UserGroupUserGroupToPerm', primaryjoin="UserGroupUserGroupToPerm.target_user_group_id==UserGroup.users_group_id", cascade='all')
 
-    owner = relationship('User')
+    owner = relationship('User', back_populates='user_groups')
 
     @hybrid_property
     def group_data(self):
@@ -852,8 +852,8 @@ class UserGroupMember(meta.Base, BaseDbModel):
     users_group_id = Column(Integer(), ForeignKey('users_groups.users_group_id'), nullable=False)
     user_id = Column(Integer(), ForeignKey('users.user_id'), nullable=False)
 
-    user = relationship('User')
-    users_group = relationship('UserGroup')
+    user = relationship('User', back_populates='group_member')
+    users_group = relationship('UserGroup', back_populates='members')
 
     def __init__(self, gr_id='', u_id=''):
         self.users_group_id = gr_id
@@ -878,7 +878,7 @@ class RepositoryField(meta.Base, BaseDbModel):
     field_type = Column(String(255), nullable=False)
     created_on = Column(DateTime(timezone=False), nullable=False, default=datetime.datetime.now)
 
-    repository = relationship('Repository')
+    repository = relationship('Repository', back_populates='extra_fields')
 
     @property
     def field_key_prefixed(self):
@@ -931,21 +931,21 @@ class Repository(meta.Base, BaseDbModel):
     fork_id = Column(Integer(), ForeignKey('repositories.repo_id'), nullable=True)
     group_id = Column(Integer(), ForeignKey('groups.group_id'), nullable=True)
 
-    owner = relationship('User')
+    owner = relationship('User', back_populates='repositories')
     fork = relationship('Repository', remote_side=repo_id)
     group = relationship('RepoGroup')
     repo_to_perm = relationship('UserRepoToPerm', cascade='all', order_by='UserRepoToPerm.repo_to_perm_id')
     users_group_to_perm = relationship('UserGroupRepoToPerm', cascade='all')
-    stats = relationship('Statistics', cascade='all', uselist=False)
+    stats = relationship('Statistics', cascade='all', uselist=False, back_populates='repository')
 
     followers = relationship('UserFollowing',
                              primaryjoin='UserFollowing.follows_repository_id==Repository.repo_id',
                              cascade='all')
     extra_fields = relationship('RepositoryField',
-                                cascade="all, delete-orphan")
+                                cascade="all, delete-orphan", back_populates='repository')
 
-    logs = relationship('UserLog')
-    comments = relationship('ChangesetComment', cascade="all, delete-orphan")
+    logs = relationship('UserLog', back_populates='repository')
+    comments = relationship('ChangesetComment', cascade="all, delete-orphan", back_populates='repo')
 
     pull_requests_org = relationship('PullRequest',
                     primaryjoin='PullRequest.org_repo_id==Repository.repo_id',
@@ -1346,7 +1346,7 @@ class RepoGroup(meta.Base, BaseDbModel):
     repo_group_to_perm = relationship('UserRepoGroupToPerm', cascade='all', order_by='UserRepoGroupToPerm.group_to_perm_id')
     users_group_to_perm = relationship('UserGroupRepoGroupToPerm', cascade='all')
     parent_group = relationship('RepoGroup', remote_side=group_id)
-    owner = relationship('User')
+    owner = relationship('User', back_populates='repo_groups')
 
     @classmethod
     def query(cls, sorted=False):
@@ -1848,7 +1848,7 @@ class Statistics(meta.Base, BaseDbModel):
     commit_activity_combined = Column(LargeBinary(), nullable=False) # JSON data
     languages = Column(LargeBinary(1000000), nullable=False) # JSON data
 
-    repository = relationship('Repository', single_parent=True)
+    repository = relationship('Repository', single_parent=True, back_populates='stats')
 
 
 class UserFollowing(meta.Base, BaseDbModel):
@@ -1894,8 +1894,8 @@ class ChangesetComment(meta.Base, BaseDbModel):
     created_on = Column(DateTime(timezone=False), nullable=False, default=datetime.datetime.now)
     modified_at = Column(DateTime(timezone=False), nullable=False, default=datetime.datetime.now)
 
-    author = relationship('User')
-    repo = relationship('Repository')
+    author = relationship('User', back_populates='user_comments')
+    repo = relationship('Repository', back_populates='comments')
     # status_change is frequently used directly in templates - make it a lazy
     # join to avoid fetching each related ChangesetStatus on demand.
     # There will only be one ChangesetStatus referencing each comment so the join will not explode.
@@ -2263,7 +2263,7 @@ class UserSshKeys(meta.Base, BaseDbModel):
     created_on = Column(DateTime(timezone=False), nullable=False, default=datetime.datetime.now)
     last_seen = Column(DateTime(timezone=False), nullable=True)
 
-    user = relationship('User')
+    user = relationship('User', back_populates='ssh_keys')
 
     @property
     def public_key(self):
