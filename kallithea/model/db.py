@@ -414,8 +414,12 @@ class User(meta.Base, BaseDbModel):
     repositories = relationship('Repository', back_populates='owner')
     repo_groups = relationship('RepoGroup', back_populates='owner')
     user_groups = relationship('UserGroup', back_populates='owner')
-    user_followers = relationship('UserFollowing', primaryjoin='UserFollowing.follows_user_id==User.user_id', cascade='all')
-    followings = relationship('UserFollowing', primaryjoin='UserFollowing.user_id==User.user_id', cascade='all')
+    user_followers = relationship(
+        'UserFollowing', primaryjoin='UserFollowing.follows_user_id==User.user_id',
+        cascade='all', back_populates='follows_user')
+    followings = relationship(
+        'UserFollowing', primaryjoin='UserFollowing.user_id==User.user_id',
+        cascade='all', back_populates='user')
 
     repo_to_perm = relationship(
         'UserRepoToPerm', primaryjoin='UserRepoToPerm.user_id==User.user_id',
@@ -787,7 +791,10 @@ class UserGroup(meta.Base, BaseDbModel):
     users_group_repo_group_to_perm = relationship(
         'UserGroupRepoGroupToPerm', cascade='all', back_populates='users_group')
     user_user_group_to_perm = relationship('UserUserGroupToPerm', cascade='all', back_populates='user_group')
-    user_group_user_group_to_perm = relationship('UserGroupUserGroupToPerm', primaryjoin="UserGroupUserGroupToPerm.target_user_group_id==UserGroup.users_group_id", cascade='all')
+    user_group_user_group_to_perm = relationship(
+        'UserGroupUserGroupToPerm',
+        primaryjoin="UserGroupUserGroupToPerm.target_user_group_id==UserGroup.users_group_id",
+        cascade='all', back_populates='target_user_group')
 
     owner = relationship('User', back_populates='user_groups')
 
@@ -949,7 +956,7 @@ class Repository(meta.Base, BaseDbModel):
 
     followers = relationship('UserFollowing',
                              primaryjoin='UserFollowing.follows_repository_id==Repository.repo_id',
-                             cascade='all')
+                             cascade='all', back_populates='follows_repository')
     extra_fields = relationship('RepositoryField',
                                 cascade="all, delete-orphan", back_populates='repository')
 
@@ -1761,7 +1768,10 @@ class UserGroupUserGroupToPerm(meta.Base, BaseDbModel):
     permission_id = Column(Integer(), ForeignKey('permissions.permission_id'), nullable=False)
     user_group_id = Column(Integer(), ForeignKey('users_groups.users_group_id'), nullable=False)
 
-    target_user_group = relationship('UserGroup', primaryjoin='UserGroupUserGroupToPerm.target_user_group_id==UserGroup.users_group_id')
+    target_user_group = relationship(
+        'UserGroup',
+        primaryjoin='UserGroupUserGroupToPerm.target_user_group_id==UserGroup.users_group_id',
+        back_populates='user_group_user_group_to_perm')
     user_group = relationship('UserGroup', primaryjoin='UserGroupUserGroupToPerm.user_group_id==UserGroup.users_group_id')
     permission = relationship('Permission')
 
@@ -1876,10 +1886,16 @@ class UserFollowing(meta.Base, BaseDbModel):
     follows_user_id = Column(Integer(), ForeignKey('users.user_id'), nullable=True)
     follows_from = Column(DateTime(timezone=False), nullable=False, default=datetime.datetime.now)
 
-    user = relationship('User', primaryjoin='User.user_id==UserFollowing.user_id')
+    user = relationship(
+        'User', primaryjoin='User.user_id==UserFollowing.user_id',
+        back_populates='followings')
 
-    follows_user = relationship('User', primaryjoin='User.user_id==UserFollowing.follows_user_id')
-    follows_repository = relationship('Repository', order_by=lambda: sqlalchemy.func.lower(Repository.repo_name))
+    follows_user = relationship(
+        'User', primaryjoin='User.user_id==UserFollowing.follows_user_id',
+        back_populates='user_followers')
+    follows_repository = relationship(
+        'Repository', order_by=lambda: sqlalchemy.func.lower(Repository.repo_name),
+        back_populates='followers')
 
     @classmethod
     def get_repo_followers(cls, repo_id):
