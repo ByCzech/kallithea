@@ -407,7 +407,9 @@ class User(meta.Base, BaseDbModel):
     _user_data = Column("user_data", LargeBinary(), nullable=True)  # JSON data # FIXME: not nullable?
 
     user_log = relationship('UserLog', back_populates='user')
-    user_perms = relationship('UserToPerm', primaryjoin="User.user_id==UserToPerm.user_id", cascade='all')
+    user_perms = relationship(
+        'UserToPerm', primaryjoin="User.user_id==UserToPerm.user_id",
+        cascade='all', back_populates='user')
 
     repositories = relationship('Repository', back_populates='owner')
     repo_groups = relationship('RepoGroup', back_populates='owner')
@@ -415,8 +417,12 @@ class User(meta.Base, BaseDbModel):
     user_followers = relationship('UserFollowing', primaryjoin='UserFollowing.follows_user_id==User.user_id', cascade='all')
     followings = relationship('UserFollowing', primaryjoin='UserFollowing.user_id==User.user_id', cascade='all')
 
-    repo_to_perm = relationship('UserRepoToPerm', primaryjoin='UserRepoToPerm.user_id==User.user_id', cascade='all')
-    repo_group_to_perm = relationship('UserRepoGroupToPerm', primaryjoin='UserRepoGroupToPerm.user_id==User.user_id', cascade='all')
+    repo_to_perm = relationship(
+        'UserRepoToPerm', primaryjoin='UserRepoToPerm.user_id==User.user_id',
+        cascade='all', back_populates='user')
+    repo_group_to_perm = relationship(
+        'UserRepoGroupToPerm', primaryjoin='UserRepoGroupToPerm.user_id==User.user_id',
+        cascade='all', back_populates='user')
 
     group_member = relationship('UserGroupMember', cascade='all', back_populates='user')
 
@@ -776,10 +782,11 @@ class UserGroup(meta.Base, BaseDbModel):
     _group_data = Column("group_data", LargeBinary(), nullable=True)  # JSON data # FIXME: not nullable?
 
     members = relationship('UserGroupMember', cascade="all, delete-orphan", back_populates='users_group')
-    users_group_to_perm = relationship('UserGroupToPerm', cascade='all')
-    users_group_repo_to_perm = relationship('UserGroupRepoToPerm', cascade='all')
-    users_group_repo_group_to_perm = relationship('UserGroupRepoGroupToPerm', cascade='all')
-    user_user_group_to_perm = relationship('UserUserGroupToPerm', cascade='all')
+    users_group_to_perm = relationship('UserGroupToPerm', cascade='all', back_populates='users_group')
+    users_group_repo_to_perm = relationship('UserGroupRepoToPerm', cascade='all', back_populates='users_group')
+    users_group_repo_group_to_perm = relationship(
+        'UserGroupRepoGroupToPerm', cascade='all', back_populates='users_group')
+    user_user_group_to_perm = relationship('UserUserGroupToPerm', cascade='all', back_populates='user_group')
     user_group_user_group_to_perm = relationship('UserGroupUserGroupToPerm', primaryjoin="UserGroupUserGroupToPerm.target_user_group_id==UserGroup.users_group_id", cascade='all')
 
     owner = relationship('User', back_populates='user_groups')
@@ -934,8 +941,10 @@ class Repository(meta.Base, BaseDbModel):
     owner = relationship('User', back_populates='repositories')
     fork = relationship('Repository', remote_side=repo_id)
     group = relationship('RepoGroup')
-    repo_to_perm = relationship('UserRepoToPerm', cascade='all', order_by='UserRepoToPerm.repo_to_perm_id')
-    users_group_to_perm = relationship('UserGroupRepoToPerm', cascade='all')
+    repo_to_perm = relationship(
+        'UserRepoToPerm', cascade='all', order_by='UserRepoToPerm.repo_to_perm_id',
+        back_populates='repository')
+    users_group_to_perm = relationship('UserGroupRepoToPerm', cascade='all', back_populates='repository')
     stats = relationship('Statistics', cascade='all', uselist=False, back_populates='repository')
 
     followers = relationship('UserFollowing',
@@ -1343,8 +1352,10 @@ class RepoGroup(meta.Base, BaseDbModel):
     owner_id = Column('user_id', Integer(), ForeignKey('users.user_id'), nullable=False)
     created_on = Column(DateTime(timezone=False), nullable=False, default=datetime.datetime.now)
 
-    repo_group_to_perm = relationship('UserRepoGroupToPerm', cascade='all', order_by='UserRepoGroupToPerm.group_to_perm_id')
-    users_group_to_perm = relationship('UserGroupRepoGroupToPerm', cascade='all')
+    repo_group_to_perm = relationship(
+        'UserRepoGroupToPerm', cascade='all', order_by='UserRepoGroupToPerm.group_to_perm_id',
+        back_populates='group')
+    users_group_to_perm = relationship('UserGroupRepoGroupToPerm', cascade='all', back_populates='group')
     parent_group = relationship('RepoGroup', remote_side=group_id)
     owner = relationship('User', back_populates='repo_groups')
 
@@ -1641,8 +1652,8 @@ class UserRepoToPerm(meta.Base, BaseDbModel):
     permission_id = Column(Integer(), ForeignKey('permissions.permission_id'), nullable=False)
     repository_id = Column(Integer(), ForeignKey('repositories.repo_id'), nullable=False)
 
-    user = relationship('User')
-    repository = relationship('Repository')
+    user = relationship('User', back_populates='repo_to_perm')
+    repository = relationship('Repository', back_populates='repo_to_perm')
     permission = relationship('Permission')
 
     @classmethod
@@ -1672,7 +1683,7 @@ class UserUserGroupToPerm(meta.Base, BaseDbModel):
     user_group_id = Column(Integer(), ForeignKey('users_groups.users_group_id'), nullable=False)
 
     user = relationship('User')
-    user_group = relationship('UserGroup')
+    user_group = relationship('UserGroup', back_populates='user_user_group_to_perm')
     permission = relationship('Permission')
 
     @classmethod
@@ -1700,7 +1711,7 @@ class UserToPerm(meta.Base, BaseDbModel):
     user_id = Column(Integer(), ForeignKey('users.user_id'), nullable=False)
     permission_id = Column(Integer(), ForeignKey('permissions.permission_id'), nullable=False)
 
-    user = relationship('User')
+    user = relationship('User', back_populates='user_perms')
     permission = relationship('Permission')
 
     def __repr__(self):
@@ -1720,9 +1731,9 @@ class UserGroupRepoToPerm(meta.Base, BaseDbModel):
     permission_id = Column(Integer(), ForeignKey('permissions.permission_id'), nullable=False)
     repository_id = Column(Integer(), ForeignKey('repositories.repo_id'), nullable=False)
 
-    users_group = relationship('UserGroup')
+    users_group = relationship('UserGroup', back_populates='users_group_repo_to_perm')
     permission = relationship('Permission')
-    repository = relationship('Repository')
+    repository = relationship('Repository', back_populates='users_group_to_perm')
 
     @classmethod
     def create(cls, users_group, repository, permission):
@@ -1779,7 +1790,7 @@ class UserGroupToPerm(meta.Base, BaseDbModel):
     users_group_id = Column(Integer(), ForeignKey('users_groups.users_group_id'), nullable=False)
     permission_id = Column(Integer(), ForeignKey('permissions.permission_id'), nullable=False)
 
-    users_group = relationship('UserGroup')
+    users_group = relationship('UserGroup', back_populates='users_group_to_perm')
     permission = relationship('Permission')
 
 
@@ -1795,8 +1806,8 @@ class UserRepoGroupToPerm(meta.Base, BaseDbModel):
     group_id = Column(Integer(), ForeignKey('groups.group_id'), nullable=False)
     permission_id = Column(Integer(), ForeignKey('permissions.permission_id'), nullable=False)
 
-    user = relationship('User')
-    group = relationship('RepoGroup')
+    user = relationship('User', back_populates='repo_group_to_perm')
+    group = relationship('RepoGroup', back_populates='repo_group_to_perm')
     permission = relationship('Permission')
 
     @classmethod
@@ -1821,9 +1832,9 @@ class UserGroupRepoGroupToPerm(meta.Base, BaseDbModel):
     group_id = Column(Integer(), ForeignKey('groups.group_id'), nullable=False)
     permission_id = Column(Integer(), ForeignKey('permissions.permission_id'), nullable=False)
 
-    users_group = relationship('UserGroup')
+    users_group = relationship('UserGroup', back_populates='users_group_repo_group_to_perm')
     permission = relationship('Permission')
-    group = relationship('RepoGroup')
+    group = relationship('RepoGroup', back_populates='users_group_to_perm')
 
     @classmethod
     def create(cls, user_group, repository_group, permission):
