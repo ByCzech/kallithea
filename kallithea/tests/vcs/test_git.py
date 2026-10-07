@@ -4,6 +4,7 @@ import sys
 
 import mock
 import pytest
+from dulwich.objects import Blob
 
 from kallithea.lib.vcs.backends.git import GitChangeset, GitRepository
 from kallithea.lib.vcs.exceptions import NodeDoesNotExistError, RepositoryError, VCSError
@@ -249,6 +250,17 @@ class TestGitChangeset(object):
 
     def setup_method(self):
         self.repo = GitRepository(TEST_GIT_REPO)
+
+    def test_get_file_content_preserves_binary_blob(self):
+        binary_content = b'\x89PNG\r\n\x1a\n\x00\xffbinary-content'
+        blob = Blob.from_string(binary_content)
+
+        changeset = GitChangeset.__new__(GitChangeset)
+        changeset.repository = mock.Mock()
+        changeset.repository._repo = {b'blob-id': blob}
+        changeset._get_id_for_path = mock.Mock(return_value=b'blob-id')
+
+        assert changeset.get_file_content('image.png') == binary_content
 
     def test_default_changeset(self):
         tip = self.repo.get_changeset()

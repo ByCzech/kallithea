@@ -250,7 +250,7 @@ class GitChangeset(BaseChangeset):
         """
         id = self._get_id_for_path(path)
         blob = self.repository._repo[id]
-        return blob.as_pretty_string()
+        return blob.as_raw_string()
 
     def get_file_size(self, path):
         """
