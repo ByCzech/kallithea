@@ -965,11 +965,11 @@ class Repository(meta.Base, BaseDbModel):
 
     pull_requests_org = relationship('PullRequest',
                     primaryjoin='PullRequest.org_repo_id==Repository.repo_id',
-                    cascade="all, delete-orphan")
+                    cascade="all, delete-orphan", back_populates='org_repo')
 
     pull_requests_other = relationship('PullRequest',
                     primaryjoin='PullRequest.other_repo_id==Repository.repo_id',
-                    cascade="all, delete-orphan")
+                    cascade="all, delete-orphan", back_populates='other_repo')
 
     def __repr__(self):
         return "<%s %s: %r>" % (self.__class__.__name__,
@@ -1927,8 +1927,9 @@ class ChangesetComment(meta.Base, BaseDbModel):
     # join to avoid fetching each related ChangesetStatus on demand.
     # There will only be one ChangesetStatus referencing each comment so the join will not explode.
     status_change = relationship('ChangesetStatus',
-                                 cascade="all, delete-orphan", lazy='joined')
-    pull_request = relationship('PullRequest')
+                                 cascade="all, delete-orphan", lazy='joined',
+                                 back_populates='comment')
+    pull_request = relationship('PullRequest', back_populates='comments')
 
     def url(self):
         anchor = "comment-%s" % self.comment_id
@@ -1987,8 +1988,8 @@ class ChangesetStatus(meta.Base, BaseDbModel):
 
     author = relationship('User')
     repo = relationship('Repository')
-    comment = relationship('ChangesetComment')
-    pull_request = relationship('PullRequest')
+    comment = relationship('ChangesetComment', back_populates='status_change')
+    pull_request = relationship('PullRequest', back_populates='statuses')
 
     def __repr__(self):
         return "<%s %r by %r>" % (
@@ -2055,12 +2056,18 @@ class PullRequest(meta.Base, BaseDbModel):
 
     owner = relationship('User')
     reviewers = relationship('PullRequestReviewer',
-                             cascade="all, delete-orphan")
-    org_repo = relationship('Repository', primaryjoin='PullRequest.org_repo_id==Repository.repo_id')
-    other_repo = relationship('Repository', primaryjoin='PullRequest.other_repo_id==Repository.repo_id')
-    statuses = relationship('ChangesetStatus', order_by='ChangesetStatus.changeset_status_id')
+                             cascade="all, delete-orphan",
+                             back_populates='pull_request')
+    org_repo = relationship('Repository',
+                            primaryjoin='PullRequest.org_repo_id==Repository.repo_id',
+                            back_populates='pull_requests_org')
+    other_repo = relationship('Repository',
+                              primaryjoin='PullRequest.other_repo_id==Repository.repo_id',
+                              back_populates='pull_requests_other')
+    statuses = relationship('ChangesetStatus', order_by='ChangesetStatus.changeset_status_id',
+                            back_populates='pull_request')
     comments = relationship('ChangesetComment', order_by='ChangesetComment.comment_id',
-                             cascade="all, delete-orphan")
+                             cascade="all, delete-orphan", back_populates='pull_request')
 
     @classmethod
     def query(cls, reviewer_id=None, include_closed=True, sorted=False):
@@ -2170,7 +2177,7 @@ class PullRequestReviewer(meta.Base, BaseDbModel):
     user_id = Column(Integer(), ForeignKey('users.user_id'), nullable=False)
 
     user = relationship('User')
-    pull_request = relationship('PullRequest')
+    pull_request = relationship('PullRequest', back_populates='reviewers')
 
     def __json__(self):
         return dict(
