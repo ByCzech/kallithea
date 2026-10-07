@@ -82,8 +82,12 @@ class SummaryController(base.BaseRepoController):
                         readme_file = f
                         log.debug('Found README file `%s` rendering...',
                                   readme_file)
-                        readme_data = renderer.render(safe_str(readme.content),
-                                                      filename=f)
+                        readme_data = renderer.render(
+                            safe_str(readme.content),
+                            filename=f,
+                            repo_name=repo_name,
+                            revision=cs.raw_id,
+                        )
                         break
                     except NodeDoesNotExistError:
                         continue

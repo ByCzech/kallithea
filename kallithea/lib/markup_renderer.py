@@ -26,14 +26,18 @@ Original author and date, and relevant copyright and licensing information is be
 """
 
 
+import functools
 import hashlib
 import logging
+import posixpath
 import re
 import traceback
+import urllib.parse
 
 import bleach
 import markdown as markdown_mod
 from bleach.css_sanitizer import CSSSanitizer
+from bleach.html5lib_shim import Filter
 from docutils.core import publish_parts
 from docutils.parsers.rst import directives
 
@@ -41,6 +45,59 @@ from kallithea.lib import webutils
 
 
 log = logging.getLogger(__name__)
+
+
+def _rewrite_repository_relative_url(
+        repo_name, revision, document_path, attr_name, target):
+    """Rewrite a relative markup URL to the corresponding repository URL."""
+    try:
+        parsed = urllib.parse.urlsplit(target)
+    except ValueError:
+        return target
+
+    # Leave absolute URLs, site-root URLs, and references within the current
+    # document unchanged.
+    if (parsed.scheme or parsed.netloc or parsed.path.startswith('/')
+            or not parsed.path):
+        return target
+
+    target_path = urllib.parse.unquote(parsed.path)
+    repo_path = posixpath.normpath(
+        posixpath.join(posixpath.dirname(document_path), target_path))
+    if repo_path == '.':
+        repo_path = ''
+
+    # A relative URL must not escape the repository root.
+    if repo_path == '..' or repo_path.startswith('../'):
+        return target
+
+    route_name = 'files_raw_home' if attr_name == 'src' else 'files_home'
+    rewritten = webutils.url(route_name,
+                             repo_name=repo_name,
+                             revision=revision,
+                             f_path=repo_path)
+    return urllib.parse.urlunsplit(
+        ('', '', rewritten, parsed.query, parsed.fragment))
+
+
+class _RepositoryUrlRewriteFilter(Filter):
+
+    def __init__(self, source, repo_name, revision, document_path):
+        super().__init__(source)
+        self.repo_name = repo_name
+        self.revision = revision
+        self.document_path = document_path
+
+    def __iter__(self):
+        for token in super().__iter__():
+            if token['type'] in ('StartTag', 'EmptyTag'):
+                for attr_name in ('href', 'src'):
+                    attr = (None, attr_name)
+                    if attr in token['data']:
+                        token['data'][attr] = _rewrite_repository_relative_url(
+                            self.repo_name, self.revision, self.document_path,
+                            attr_name, token['data'][attr])
+            yield token
 
 
 class MarkupRenderer(object):
@@ -111,7 +168,7 @@ class MarkupRenderer(object):
         return text
 
     @classmethod
-    def render(cls, source, filename=None):
+    def render(cls, source, filename=None, repo_name=None, revision=None):
         """
         Renders a given filename using detected renderer
         it detects renderers based on file extension or mimetype.
@@ -132,11 +189,20 @@ class MarkupRenderer(object):
         """
 
         renderer = cls._detect_renderer(source, filename)
-        readme_data = renderer(source)
+        rendered_html = renderer(source)
         # Allow most HTML, while preventing XSS issues:
         # no <script> tags, no onclick attributes, no javascript
         # "protocol", and also limit styling to prevent defacing.
-        return bleach.clean(readme_data,
+        filters = []
+        if repo_name is not None and revision is not None:
+            filters.append(functools.partial(
+                _RepositoryUrlRewriteFilter,
+                repo_name=repo_name,
+                revision=revision,
+                document_path=filename,
+            ))
+
+        cleaner = bleach.Cleaner(
             tags=['a', 'abbr', 'b', 'blockquote', 'br', 'code', 'dd',
                   'div', 'dl', 'dt', 'em', 'h1', 'h2', 'h3', 'h4', 'h5',
                   'h6', 'hr', 'i', 'img', 'li', 'ol', 'p', 'pre', 'span',
@@ -145,7 +211,9 @@ class MarkupRenderer(object):
             attributes=['class', 'id', 'style', 'label', 'title', 'alt', 'href', 'src'],
             css_sanitizer=CSSSanitizer(allowed_css_properties=['color']),
             protocols=['http', 'https', 'mailto'],
+            filters=filters,
             )
+        return cleaner.clean(rendered_html)
 
     @classmethod
     def plain(cls, source, universal_newline=True):
